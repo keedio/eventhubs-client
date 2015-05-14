@@ -2,7 +2,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.eventhubs.client</groupId>
-  <artifactId>eventhubs-lient</artifactId>
+  <artifactId>eventhubs-client</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
   <name>EventHubs Client</name>
@@ -11,6 +11,29 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <qpid.version>0.32</qpid.version>
   </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"></transformer>
+          </transformers>
+          <outputFile>target/${project.artifactId}-${project.version}-jar-with-dependencies.jar</outputFile>
+        </configuration>
+	  </plugin>
+    </plugins>
+  </build>
   <dependencies>
     <dependency>
       <groupId>org.apache.qpid</groupId>
@@ -31,9 +54,8 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
 	  <version>1.7.12</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

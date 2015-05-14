@@ -15,21 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.microsoft.eventhubs.client;
+package com.microsoft.eventhubs.client.example;
 
+import com.microsoft.eventhubs.client.ConnectionStringBuilder;
+import com.microsoft.eventhubs.client.EventHubClient;
+import com.microsoft.eventhubs.client.EventHubException;
+import com.microsoft.eventhubs.client.EventHubSender;
+
+/**
+ * An example showing how to use EventHubSender to send messages to EventHubs
+ */
 public class EventHubSendClient {
   
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     
     if (args == null || args.length < 7) {
-      throw new IllegalArgumentException(
-        "arguments are missing. [username] [password] [namespace] [entityPath] [partitionId] [messageSize] [messageCount] are required.");
+      System.out.println("Usage: SendClient <policyName> <policyKey> <namespace> <name> <partitionId> <messageSize> <messageCount>");
+      return;
     }
     
-    String username = args[0];
-    String password = args[1];
+    String policyName = args[0];
+    String policyKey = args[1];
     String namespace = args[2];
-    String entityPath = args[3];
+    String name = args[3];
     String partitionId = args[4];
     int messageSize = Integer.parseInt(args[5]);
     int messageCount = Integer.parseInt(args[6]);
@@ -42,8 +50,7 @@ public class EventHubSendClient {
     }
     
     try {
-      String connectionString = EventHubClient.buildConnectionString(username, password, namespace);
-      EventHubClient client = EventHubClient.create(connectionString, entityPath);
+      EventHubClient client = EventHubClient.create(policyName, policyKey, namespace, name);
       EventHubSender sender = client.createPartitionSender(partitionId);
       
       StringBuilder sb = new StringBuilder(messageSize);
@@ -59,7 +66,7 @@ public class EventHubSendClient {
         }
       }
       System.out.println("Total Number of messages sent: " + messageCount);
-    } catch (Exception e) {
+    } catch (EventHubException e) {
       System.out.println("Exception: " + e.getMessage());
     }
     

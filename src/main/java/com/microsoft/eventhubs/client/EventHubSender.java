@@ -42,18 +42,18 @@ public class EventHubSender {
     this.session = session;
     this.entityPath = entityPath;
     this.partitionId = partitionId;
-    this.destinationAddress = this.getDestinationAddress();
+    this.destinationAddress = getDestinationAddress();
   }
   
   public void send(byte[] data) throws EventHubException {
     try {
-      if (this.sender == null) {
-        this.ensureSenderCreated();
+      if (sender == null) {
+        ensureSenderCreated();
       }
 
       Binary bin = new Binary(data);
       Message message = new Message(new Data(bin));
-      this.sender.send(message);
+      sender.send(message);
 
     } catch (LinkDetachedException e) {
       logger.error(e.getMessage());
@@ -77,23 +77,23 @@ public class EventHubSender {
 
   public void close() {
     try {
-      this.sender.close();
+      sender.close();
     } catch (Sender.SenderClosingException e) {
       logger.error("Closing a sender encountered error: " + e.getMessage());
     }
   }
 
   private String getDestinationAddress() {
-    if (this.partitionId == null || this.partitionId.equals("")) {
-      return this.entityPath;
+    if (partitionId == null || partitionId.equals("")) {
+      return entityPath;
     } else {
-      return String.format(Constants.DestinationAddressFormatString, this.entityPath, this.partitionId);
+      return String.format(Constants.DestinationAddressFormatString, entityPath, partitionId);
     }
   }
 
   private synchronized void ensureSenderCreated() throws Exception {
-    if (this.sender == null) {
-      this.sender = this.session.createSender(this.destinationAddress);
+    if (sender == null) {
+      sender = session.createSender(destinationAddress);
     }
   }
 }

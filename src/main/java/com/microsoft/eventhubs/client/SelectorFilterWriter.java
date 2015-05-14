@@ -25,8 +25,6 @@ public class SelectorFilterWriter extends
   AbstractDescribedTypeWriter<SelectorFilter> {
 
   private static final ValueWriter.Factory<SelectorFilter> FACTORY = new ValueWriter.Factory<SelectorFilter>() {
-
-    @Override
     public ValueWriter<SelectorFilter> newInstance(ValueWriter.Registry registry) {
       return new SelectorFilterWriter(registry);
     }

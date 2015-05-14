@@ -25,64 +25,47 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.URLStreamHandler;
 
+/**
+ * Parse AMQP connection string and get policyName, policyKey, host etc.
+ * The format of the connection string is:
+ *   amqp[s]://{policyName}:{policyKey}@{host}/
+ */
 public class ConnectionStringParser {
 
   private final String connectionString;
 
   private String host;
   private int port;
-  private String userName;
-  private String password;
+  private String policyName;
+  private String policyKey;
   private boolean ssl;
 
-  // amqps://[username]:[password]@[namespace].servicebus.windows.net/
   public ConnectionStringParser(String connectionString) throws EventHubException {
     this.connectionString = connectionString;
-    this.initialize();
+    initialize();
   }
 
   public String getHost() {
     return this.host;
   }
 
-  public void setHost(String value) {
-    this.host = value;
-  }
-
   public int getPort() {
     return this.port;
   }
 
-  public void setPort(int value) {
-    this.port = value;
+  public String getPolicyName() {
+    return this.policyName;
   }
 
-  public String getUserName() {
-    return this.userName;
-  }
-
-  public void setUserName(String value) {
-    this.userName = value;
-  }
-
-  public String getPassword() {
-    return this.password;
-  }
-
-  public void setPassword(String value) {
-    this.password = value;
+  public String getPolicyKey() {
+    return this.policyKey;
   }
 
   public boolean getSsl() {
     return this.ssl;
   }
 
-  public void setSsl(boolean value) {
-    this.ssl = value;
-  }
-
   private void initialize() throws EventHubException {
-
     URL url;
     try {
       url = new URL(null, this.connectionString, new NullURLStreamHandler());
@@ -102,9 +85,12 @@ public class ConnectionStringParser {
     String userInfo = url.getUserInfo();
     if (userInfo != null) {
       String[] credentials = userInfo.split(":", 2);
+      if(credentials.length != 2) {
+        throw new EventHubException("connectionString does not contain policy info.");
+      }
       try {
-        userName = URLDecoder.decode(credentials[0], "UTF-8");
-        password = URLDecoder.decode(credentials[1], "UTF-8");
+        policyName = URLDecoder.decode(credentials[0], "UTF-8");
+        policyKey = URLDecoder.decode(credentials[1], "UTF-8");
       }
       catch(UnsupportedEncodingException ex) {
         throw new EventHubException(ex);
@@ -113,8 +99,6 @@ public class ConnectionStringParser {
   }
 
   class NullURLStreamHandler extends URLStreamHandler {
-
-    @Override
     protected URLConnection openConnection(URL u) throws IOException {
       throw new UnsupportedOperationException("Not supported yet.");
     }
