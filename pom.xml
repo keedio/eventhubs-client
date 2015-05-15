@@ -4,7 +4,7 @@
   <groupId>com.microsoft.eventhubs.client</groupId>
   <artifactId>eventhubs-client</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>0.9</version>
   <name>EventHubs Client</name>
   <url>http://maven.apache.org</url>
   <properties>

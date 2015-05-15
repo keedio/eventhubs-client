@@ -36,8 +36,8 @@ public class ConnectionStringParser {
 
   private String host;
   private int port;
-  private String policyName;
-  private String policyKey;
+  private String policyName = "";
+  private String policyKey = "";
   private boolean ssl;
 
   public ConnectionStringParser(String connectionString) throws EventHubException {
@@ -46,40 +46,44 @@ public class ConnectionStringParser {
   }
 
   public String getHost() {
-    return this.host;
+    return host;
   }
 
   public int getPort() {
-    return this.port;
+    return port;
   }
 
   public String getPolicyName() {
-    return this.policyName;
+    return policyName;
   }
 
   public String getPolicyKey() {
-    return this.policyKey;
+    return policyKey;
   }
 
   public boolean getSsl() {
-    return this.ssl;
+    return ssl;
   }
 
   private void initialize() throws EventHubException {
     URL url;
     try {
-      url = new URL(null, this.connectionString, new NullURLStreamHandler());
+      url = new URL(null, connectionString, new NullURLStreamHandler());
     } catch (MalformedURLException e) {
       throw new EventHubException("connectionString is not valid.", e);
     }
 
     String protocol = url.getProtocol();
-    this.ssl = protocol.equalsIgnoreCase(Constants.SslScheme);
-    this.host = url.getHost();
-    this.port = url.getPort();
+    if (!protocol.startsWith(Constants.AmqpScheme)) {
+      throw new EventHubException("invalid scheme in connectionString");
+    }
 
-    if (this.port == -1) {
-      this.port = this.ssl ? Constants.DefaultSslPort : Constants.DefaultPort;
+    ssl = protocol.equalsIgnoreCase(Constants.AmqpSslScheme);
+    host = url.getHost();
+    port = url.getPort();
+
+    if (port == -1) {
+      port = ssl ? Constants.DefaultSslPort : Constants.DefaultPort;
     }
 
     String userInfo = url.getUserInfo();
@@ -95,6 +99,9 @@ public class ConnectionStringParser {
       catch(UnsupportedEncodingException ex) {
         throw new EventHubException(ex);
       }
+    }
+    if (policyName.length() == 0 || policyKey.length() == 0) {
+      throw new EventHubException("invalid userInfo in connectionString");
     }
   }
 

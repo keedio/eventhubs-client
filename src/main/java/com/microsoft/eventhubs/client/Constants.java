@@ -25,7 +25,8 @@ public class Constants {
   public static final String EnqueueTimeFilterFormatString = "amqp.annotation.x-opt-enqueuedtimeutc > %d";
   public static final String ConsumerAddressFormatString = "%s/ConsumerGroups/%s/Partitions/%s";
   public static final String DestinationAddressFormatString = "%s/Partitions/%s";
-  public static final String SslScheme = "amqps";
+  public static final String AmqpSslScheme = "amqps";
+  public static final String AmqpScheme = "amqp";
   public static final int DefaultPort = 5672;
   public static final int DefaultSslPort = 5671;
   public static final String ServiceFqdnSuffix = "servicebus.windows.net";

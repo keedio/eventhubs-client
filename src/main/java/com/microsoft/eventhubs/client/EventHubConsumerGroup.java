@@ -36,34 +36,33 @@ public class EventHubConsumerGroup {
   }
 
   public EventHubReceiver createReceiver(String partitionId, String startingOffset, int defaultCredits) throws EventHubException {
-    this.ensureSessionCreated();
+    ensureSessionCreated();
 
     if (startingOffset == null || startingOffset.equals("")) {
       startingOffset = Constants.DefaultStartingOffset;
     }
 
     String filterStr = String.format(Constants.OffsetFilterFormatString, startingOffset);
-    return new EventHubReceiver(this.session, this.entityPath, this.consumerGroupName, partitionId, filterStr, defaultCredits);
+    return new EventHubReceiver(session, entityPath, consumerGroupName, partitionId, filterStr, defaultCredits);
   }
   
   public EventHubReceiver createReceiver(String partitionId, long timeAfter, int defaultCredits) throws EventHubException {
-    this.ensureSessionCreated();
+    ensureSessionCreated();
 
     String filterStr = String.format(Constants.EnqueueTimeFilterFormatString, timeAfter);
-    return new EventHubReceiver(this.session, this.entityPath, this.consumerGroupName, partitionId, filterStr, defaultCredits);
+    return new EventHubReceiver(session, entityPath, consumerGroupName, partitionId, filterStr, defaultCredits);
   }
 
   public void close() {
-    if (this.session != null) {
-      this.session.close();
+    if (session != null) {
+      session.close();
     }
   }
 
   synchronized void ensureSessionCreated() throws EventHubException {
-
     try {
-      if (this.session == null) {
-        this.session = this.connection.createSession();
+      if (session == null) {
+        session = connection.createSession();
       }
     } catch (ConnectionException e) {
       throw new EventHubException(e);
