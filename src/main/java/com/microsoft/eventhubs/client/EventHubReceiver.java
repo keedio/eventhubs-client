@@ -18,7 +18,6 @@
 package com.microsoft.eventhubs.client;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 
 import org.apache.qpid.amqp_1_0.client.AcknowledgeMode;
@@ -26,13 +25,9 @@ import org.apache.qpid.amqp_1_0.client.ConnectionErrorException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Receiver;
 import org.apache.qpid.amqp_1_0.client.Session;
-import org.apache.qpid.amqp_1_0.type.Section;
 import org.apache.qpid.amqp_1_0.type.Symbol;
 import org.apache.qpid.amqp_1_0.type.UnsignedInteger;
-import org.apache.qpid.amqp_1_0.type.messaging.AmqpValue;
-import org.apache.qpid.amqp_1_0.type.messaging.Data;
 import org.apache.qpid.amqp_1_0.type.messaging.Filter;
-import org.apache.qpid.amqp_1_0.type.messaging.MessageAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,49 +90,6 @@ public final class EventHubReceiver {
     return null;
   }
 
-  /**
-   * Receive an AMQP message and parse it into EventHubMessage.
-   * Note that this method may throw RuntimeException when error occurred.
-   */
-  public EventHubMessage receiveAndParse(long waitTimeInMilliseconds) {
-    Message message = receive(waitTimeInMilliseconds);
-    EventHubMessage ehMessage = null;
-    if(message != null) {
-      String offset = null;
-      long sequence = 0;
-      long enqueuedTimestamp = 0;
-      String data = null;
-      for (Section section : message.getPayload()) {
-        if (section instanceof MessageAnnotations) {
-          Map annotationMap = ((MessageAnnotations)section).getValue();
-
-          if (annotationMap.containsKey(Symbol.valueOf(Constants.OffsetKey))) {
-            offset = (String) annotationMap.get(
-                Symbol.valueOf(Constants.OffsetKey));
-          }
-          if (annotationMap.containsKey(
-              Symbol.valueOf(Constants.SequenceNumberKey))) {
-            sequence = (Long) annotationMap.get(
-                Symbol.valueOf(Constants.SequenceNumberKey));
-          }
-          if (annotationMap.containsKey(
-              Symbol.valueOf(Constants.EnqueuedTimeKey))) {
-            enqueuedTimestamp = ((Date) annotationMap.get(
-                Symbol.valueOf(Constants.EnqueuedTimeKey))).getTime();
-          }
-        }
-        else if (data == null && section instanceof Data) {
-          data = new String(((Data)section).getValue().getArray());
-        }
-        else if (data == null && section instanceof AmqpValue) {
-          data = ((AmqpValue) section).getValue().toString();
-        }
-      }
-      ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, data);
-    }
-    return ehMessage;
-  }
-
   public void close() {
     if (!isClosed) {
       receiver.close();
@@ -157,7 +109,6 @@ public final class EventHubReceiver {
           AcknowledgeMode.ALO, Constants.ReceiverLinkName, false, filters, null);
       receiver.setCredit(UnsignedInteger.valueOf(defaultCredits), true);
     } catch (ConnectionErrorException e) {
-      // caller (EventHubSpout) will log the error
       throw new EventHubException(e);
     }
   }

@@ -1,10 +1,8 @@
 package com.microsoft.eventhubs.client.example;
 
-import org.apache.qpid.amqp_1_0.client.Message;
-
-import com.microsoft.eventhubs.client.ConnectionStringBuilder;
 import com.microsoft.eventhubs.client.Constants;
 import com.microsoft.eventhubs.client.EventHubClient;
+import com.microsoft.eventhubs.client.EventHubEnqueueTimeFilter;
 import com.microsoft.eventhubs.client.EventHubException;
 import com.microsoft.eventhubs.client.EventHubMessage;
 import com.microsoft.eventhubs.client.EventHubReceiver;
@@ -25,26 +23,26 @@ public class EventHubReceiveClient {
     String namespace = args[2];
     String name = args[3];
     String partitionId = args[4];
-    long enqueueTimeFilter = 0;
+    long enqueueTime = 0;
     if(args.length >= 6) {
       long enqueueTimeDiff = Integer.parseInt(args[5]);
-      enqueueTimeFilter = System.currentTimeMillis() - enqueueTimeDiff*1000;
+      enqueueTime = System.currentTimeMillis() - enqueueTimeDiff*1000;
     }
     
     try {
       
       EventHubClient client = EventHubClient.create(policyName, policyKey, namespace, name);
       EventHubReceiver receiver = null;
-      if(enqueueTimeFilter == 0) {
+      if(enqueueTime == 0) {
         receiver = client.getConsumerGroup(null).createReceiver(partitionId,
-            Constants.DefaultStartingOffset, Constants.DefaultAmqpCredits);
+            null, Constants.DefaultAmqpCredits);
       }
       else {
         receiver = client.getConsumerGroup(null).createReceiver(partitionId,
-            enqueueTimeFilter, Constants.DefaultAmqpCredits);
+            new EventHubEnqueueTimeFilter(enqueueTime), Constants.DefaultAmqpCredits);
       }
       while(true) {
-        EventHubMessage message = receiver.receiveAndParse(5000);
+        EventHubMessage message = EventHubMessage.parseAmqpMessage(receiver.receive(5000));
         if(message != null) {
           System.out.println("Received: (" + message.getOffset() + " | "
               + message.getSequence() + " | " + message.getEnqueuedTimestamp()

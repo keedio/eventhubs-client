@@ -35,24 +35,20 @@ public class EventHubConsumerGroup {
     this.consumerGroupName = consumerGroupName;
   }
 
-  public EventHubReceiver createReceiver(String partitionId, String startingOffset, int defaultCredits) throws EventHubException {
+  public EventHubReceiver createReceiver(String partitionId, IEventHubFilter filter, int defaultCredits) throws EventHubException {
     ensureSessionCreated();
 
-    if (startingOffset == null || startingOffset.equals("")) {
-      startingOffset = Constants.DefaultStartingOffset;
+    if(filter == null) {
+      filter = new EventHubOffsetFilter(Constants.DefaultStartingOffset);
+    }
+    if(defaultCredits < 0) {
+      defaultCredits = Constants.DefaultAmqpCredits;
     }
 
-    String filterStr = String.format(Constants.OffsetFilterFormatString, startingOffset);
-    return new EventHubReceiver(session, entityPath, consumerGroupName, partitionId, filterStr, defaultCredits);
+    return new EventHubReceiver(session, entityPath, consumerGroupName,
+        partitionId, filter.getFilterString(), defaultCredits);
   }
   
-  public EventHubReceiver createReceiver(String partitionId, long timeAfter, int defaultCredits) throws EventHubException {
-    ensureSessionCreated();
-
-    String filterStr = String.format(Constants.EnqueueTimeFilterFormatString, timeAfter);
-    return new EventHubReceiver(session, entityPath, consumerGroupName, partitionId, filterStr, defaultCredits);
-  }
-
   public void close() {
     if (session != null) {
       session.close();

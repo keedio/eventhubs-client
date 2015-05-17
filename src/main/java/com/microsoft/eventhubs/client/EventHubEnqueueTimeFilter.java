@@ -17,22 +17,19 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client;
 
-public class EventHubException extends Exception {
-  private static final long serialVersionUID = 1L;
-
-  public EventHubException() {
-    super();
+public class EventHubEnqueueTimeFilter implements IEventHubFilter {
+  String filterString;
+  long timeAfter;
+  public EventHubEnqueueTimeFilter(long timeAfter) {
+    this.timeAfter = timeAfter;
+    filterString = String.format(Constants.EnqueueTimeFilterFormatString, timeAfter);
   }
 
-  public EventHubException(String message) {
-    super(message);
+  public String getFilterString() {
+    return filterString;
   }
 
-  public EventHubException(Throwable cause) {
-    super(cause);
-  }
-
-  public EventHubException(String message, Throwable cause) {
-    super(message, cause);
+  public String getFilterValue() {
+    return ""+timeAfter;
   }
 }

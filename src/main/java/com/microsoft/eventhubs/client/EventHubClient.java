@@ -17,9 +17,6 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
 import org.apache.qpid.amqp_1_0.client.Connection;
 import org.apache.qpid.amqp_1_0.client.ConnectionErrorException;
 import org.apache.qpid.amqp_1_0.client.ConnectionException;
@@ -67,7 +64,6 @@ public class EventHubClient {
     try {
       return new EventHubSender(connection.createSession(), entityPath, partitionId);
     } catch (ConnectionException e) {
-      logger.error(e.toString());
       throw new EventHubException(e);
     }
   }
@@ -100,7 +96,6 @@ public class EventHubClient {
         ConnectionStringParser.getHost(),
         ConnectionStringParser.getSsl());
     } catch (ConnectionException e) {
-      logger.error(e.toString());
       throw new EventHubException(e);
     }
     clientConnection.getEndpoint().setSyncTimeout(Constants.ConnectionSyncTimeout);

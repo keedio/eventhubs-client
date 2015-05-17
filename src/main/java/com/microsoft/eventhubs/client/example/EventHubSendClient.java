@@ -17,7 +17,6 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client.example;
 
-import com.microsoft.eventhubs.client.ConnectionStringBuilder;
 import com.microsoft.eventhubs.client.EventHubClient;
 import com.microsoft.eventhubs.client.EventHubException;
 import com.microsoft.eventhubs.client.EventHubSender;

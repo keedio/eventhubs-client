@@ -17,22 +17,10 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client;
 
-public class EventHubException extends Exception {
-  private static final long serialVersionUID = 1L;
+public interface IEventHubFilter {
+  //The formatted filterString that can be used to create EventHubReceiver
+  String getFilterString();
 
-  public EventHubException() {
-    super();
-  }
-
-  public EventHubException(String message) {
-    super(message);
-  }
-
-  public EventHubException(Throwable cause) {
-    super(cause);
-  }
-
-  public EventHubException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  //The raw value set to the filter, this is useful for testing
+  String getFilterValue();
 }
