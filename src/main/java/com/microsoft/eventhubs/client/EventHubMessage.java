@@ -30,18 +30,34 @@ public class EventHubMessage {
     this.data = data;
   }
 
+  /**
+   * Get offset of the message, offset can be used as filter to create
+   * EventHubReceiver.
+   */
   public String getOffset() {
     return offset;
   }
 
+  /**
+   * Get sequence number of the message, sequence number cannot be used as
+   * filter to create EventHubReceiver.
+   * Sequence number can be used to reliably compare the order of the messages.
+   */
   public long getSequence() {
     return sequence;
   }
 
+  /**
+   * Get enqueued time of the message, enqueued time can be used as filter
+   * to create EventHubReceiver.
+   */
   public long getEnqueuedTimestamp() {
     return enqueuedTimestamp;
   }
 
+  /**
+   * Get the raw data of the message.
+   */
   public String getData() {
     return data;
   }

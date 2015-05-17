@@ -70,13 +70,14 @@ public final class EventHubReceiver {
     ensureReceiverCreated();
   }
 
-  // receive without timeout means wait until a message is delivered.
-  public Message receive() {
-    return receive(-1L);
-  }
-
+  /**
+   * Receive raw AMQP message.
+   * Note that this method may throw RuntimeException when error occurred.
+   * @param waitTimeInMilliseconds a value of -1 means wait until a message is
+   * received
+   * @return raw AMQP message 
+   */
   public Message receive(long waitTimeInMilliseconds) {
-
     checkIfClosed();
 
     Message message = receiver.receive(waitTimeInMilliseconds);
@@ -93,7 +94,11 @@ public final class EventHubReceiver {
 
     return null;
   }
-  
+
+  /**
+   * Receive an AMQP message and parse it into EventHubMessage.
+   * Note that this method may throw RuntimeException when error occurred.
+   */
   public EventHubMessage receiveAndParse(long waitTimeInMilliseconds) {
     Message message = receive(waitTimeInMilliseconds);
     EventHubMessage ehMessage = null;
@@ -165,14 +170,9 @@ public final class EventHubReceiver {
       close();
 
       throw new RuntimeException(errorMessage);
-    } else {
-      // adding a sleep here to avoid any potential tight-loop issue.
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException e) {
-        logger.error(e.toString());
-      }
     }
+    //No need to sleep here because if receive() returns null, it should have
+    //waited waitTimeInMilliseconds
   }
   
   private void checkIfClosed() {
