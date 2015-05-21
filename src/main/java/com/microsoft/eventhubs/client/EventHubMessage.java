@@ -27,13 +27,19 @@ import org.apache.qpid.amqp_1_0.type.messaging.AmqpValue;
 import org.apache.qpid.amqp_1_0.type.messaging.Data;
 import org.apache.qpid.amqp_1_0.type.messaging.MessageAnnotations;
 
+/**
+ * EventHubs message. It contains offset, sequence number and enqueued time
+ * information of the message. It also includes the data section according to
+ * AMQP protocol. If you use AmqpValue or AmqpSequence in AMQP protocol, you
+ * need to parse raw AMQP message to get the value.
+ */
 public class EventHubMessage {
   private String offset;
   private long sequence;
   private long enqueuedTimestamp;
-  private String data;
+  private byte[] data;
 
-  public EventHubMessage(String offset, long sequence, long enqueuedTimestamp, String data) {
+  public EventHubMessage(String offset, long sequence, long enqueuedTimestamp, byte[] data) {
     this.offset = offset;
     this.sequence = sequence;
     this.enqueuedTimestamp = enqueuedTimestamp;
@@ -47,7 +53,7 @@ public class EventHubMessage {
       String offset = null;
       long sequence = 0;
       long enqueuedTimestamp = 0;
-      String data = null;
+      byte[] data = null;
       for (Section section : message.getPayload()) {
         if (section instanceof MessageAnnotations) {
           Map annotationMap = ((MessageAnnotations)section).getValue();
@@ -68,10 +74,10 @@ public class EventHubMessage {
           }
         }
         else if (data == null && section instanceof Data) {
-          data = new String(((Data)section).getValue().getArray());
+          data = ((Data)section).getValue().getArray();
         }
         else if (data == null && section instanceof AmqpValue) {
-          data = ((AmqpValue) section).getValue().toString();
+          data = (((AmqpValue)section).getValue().toString()).getBytes();
         }
       }
       ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, data);
@@ -107,7 +113,17 @@ public class EventHubMessage {
   /**
    * Get the raw data of the message.
    */
-  public String getData() {
+  public byte[] getData() {
     return data;
+  }
+
+  /**
+   * Convenient method: Get the data of the message as String.
+   */
+  public String getDataAsString() {
+    if(data==null) {
+      return "";
+    }
+    return new String(data);
   }
 }

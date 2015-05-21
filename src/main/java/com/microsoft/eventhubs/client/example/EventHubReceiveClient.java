@@ -46,7 +46,7 @@ public class EventHubReceiveClient {
         if(message != null) {
           System.out.println("Received: (" + message.getOffset() + " | "
               + message.getSequence() + " | " + message.getEnqueuedTimestamp()
-              + ") => " + message.getData());
+              + ") => " + message.getDataAsString());
         }
       }
     }
