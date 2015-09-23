@@ -35,6 +35,14 @@ public class EventHubClient {
     this.entityPath = entityPath;
     connection = createConnection();
   }
+  
+  String getConnectionString() {
+    return connectionString;
+  }
+  
+  String getEntityPath() {
+    return entityPath;
+  }
 
   /**
    * creates a new instance of EventHubClient using the supplied connection string and entity path.

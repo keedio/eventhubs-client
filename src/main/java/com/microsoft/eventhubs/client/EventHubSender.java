@@ -18,11 +18,13 @@
 package com.microsoft.eventhubs.client;
 
 import java.util.concurrent.TimeoutException;
+
 import org.apache.qpid.amqp_1_0.client.LinkDetachedException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Sender;
 import org.apache.qpid.amqp_1_0.client.Session;
 import org.apache.qpid.amqp_1_0.type.Binary;
+import org.apache.qpid.amqp_1_0.type.Section;
 import org.apache.qpid.amqp_1_0.type.messaging.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,14 +47,13 @@ public class EventHubSender {
     this.destinationAddress = getDestinationAddress();
   }
   
-  public void send(byte[] data) throws EventHubException {
+  public void send(Section section) throws EventHubException {
     try {
       if (sender == null) {
         ensureSenderCreated();
       }
 
-      Binary bin = new Binary(data);
-      Message message = new Message(new Data(bin));
+      Message message = new Message(section);
       sender.send(message);
 
     } catch (LinkDetachedException e) {
@@ -68,6 +69,11 @@ public class EventHubSender {
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
+  }
+  
+  public void send(byte[] data) throws EventHubException {
+	  Binary bin = new Binary(data);
+	  send(new Data(bin));
   }
 
   public void send(String data) throws EventHubException {

@@ -34,6 +34,14 @@ public class EventHubConsumerGroup {
     this.entityPath = entityPath;
     this.consumerGroupName = consumerGroupName;
   }
+  
+  public String getEntityPath() {
+	return entityPath;
+  }
+  
+  public String getConsumerGroupName() {
+	return consumerGroupName;
+  }
 
   public EventHubReceiver createReceiver(String partitionId, IEventHubFilter filter, int defaultCredits) throws EventHubException {
     ensureSessionCreated();
