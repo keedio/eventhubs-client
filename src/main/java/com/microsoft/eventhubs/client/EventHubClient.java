@@ -72,6 +72,7 @@ public class EventHubClient {
     try {
       return new EventHubSender(connection.createSession(), entityPath, partitionId);
     } catch (ConnectionException e) {
+      logger.error("An error occured while creating the partition sender session.", e);
       throw new EventHubException(e);
     }
   }
@@ -87,7 +88,7 @@ public class EventHubClient {
     try {
       connection.close();
     } catch (ConnectionErrorException e) {
-      logger.error(e.toString());
+      logger.error("An error occured while closing the connection", e);
     }
   }
 

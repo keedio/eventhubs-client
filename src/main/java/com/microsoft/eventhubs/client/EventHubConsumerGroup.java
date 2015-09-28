@@ -36,11 +36,11 @@ public class EventHubConsumerGroup {
   }
   
   public String getEntityPath() {
-	return entityPath;
+    return entityPath;
   }
   
   public String getConsumerGroupName() {
-	return consumerGroupName;
+    return consumerGroupName;
   }
 
   public EventHubReceiver createReceiver(String partitionId, IEventHubFilter filter, int defaultCredits) throws EventHubException {

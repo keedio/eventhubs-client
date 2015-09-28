@@ -18,7 +18,6 @@
 package com.microsoft.eventhubs.client;
 
 import java.util.concurrent.TimeoutException;
-
 import org.apache.qpid.amqp_1_0.client.LinkDetachedException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Sender;
@@ -49,31 +48,27 @@ public class EventHubSender {
   
   public void send(Section section) throws EventHubException {
     try {
-      if (sender == null) {
-        ensureSenderCreated();
-      }
+      ensureSenderCreated();
 
       Message message = new Message(section);
       sender.send(message);
 
-    } catch (LinkDetachedException e) {
-      logger.error(e.getMessage());
-
-      EventHubException eventHubException = new EventHubException("Sender has been closed");
-      throw eventHubException;
-    } catch (TimeoutException e) {
-      logger.error(e.getMessage());
-
-      EventHubException eventHubException = new EventHubException("Timed out while waiting to get credit to send");
-      throw eventHubException;
     } catch (Exception e) {
-      logger.error(e.getMessage());
+        HandleException(e);
     }
   }
   
   public void send(byte[] data) throws EventHubException {
-	  Binary bin = new Binary(data);
-	  send(new Data(bin));
+    try {
+      ensureSenderCreated();
+
+      Binary bin = new Binary(data);
+      Message message = new Message(new Data(bin));
+      sender.send(message);
+
+    } catch (Exception e) {
+      HandleException(e);
+    }
   }
 
   public void send(String data) throws EventHubException {
@@ -81,11 +76,27 @@ public class EventHubSender {
     send(data.getBytes());
   }
 
-  public void close() {
+  public void HandleException(Exception e) throws EventHubException {
+    logger.error(e.getMessage());
+    if(e instanceof LinkDetachedException) {
+      //We want to re-establish the connection if the sender was closed
+      //The sender.isClosed() does not get set properly if LinkDetachedException occurs
+      //Hence let's set it explicitly to null, if the caller is just eating the exceptions (for e.g. storm-eventhubs bolt)
+      //TODO: We may have to do the same for more exception types which may require re-open
+      //For now this is good enough for long running client sending objects continuously
+      sender = null;
+      throw new EventHubException("Sender has been closed.", e);
+    } else if (e instanceof TimeoutException) {
+      throw new EventHubException("Timed out while waiting to get credit to send.", e);
+    } else {
+      throw new EventHubException("An unexpected error occurred while sending data.", e);
+    }
+  }
+  public void close() throws EventHubException {
     try {
       sender.close();
     } catch (Sender.SenderClosingException e) {
-      logger.error("Closing a sender encountered error: " + e.getMessage());
+      throw new EventHubException("An error occurred while closing the sender.", e);
     }
   }
 
@@ -98,7 +109,8 @@ public class EventHubSender {
   }
 
   private synchronized void ensureSenderCreated() throws Exception {
-    if (sender == null) {
+    if (sender == null || sender.isClosed()) {
+      logger.info("Creating EventHubs sender");
       sender = session.createSender(destinationAddress);
     }
   }

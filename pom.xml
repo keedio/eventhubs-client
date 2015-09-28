@@ -4,7 +4,7 @@
   <groupId>com.microsoft.eventhubs.client</groupId>
   <artifactId>eventhubs-client</artifactId>
   <packaging>jar</packaging>
-  <version>0.9.1</version>
+  <version>1.0</version>
   <name>EventHubs Client</name>
   <description>A generic EventHubs client library for JVM</description>
   <url>https://github.com/hdinsight/eventhubs-client</url>

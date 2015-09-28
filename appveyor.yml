@@ -12,7 +12,8 @@ install:
       }
 build_script:
   - ps: |
-      $env:PATH = "C:\maven\apache-maven-3.2.5\bin;%JAVA_HOME%\bin;" + $env:PATH
+      $env:M2_HOME = "C:\maven\apache-maven-3.2.5"
+      $env:PATH = "$env:M2_HOME\bin;$env:JAVA_HOME\bin;" + $env:PATH
       mvn clean package -B -V
 cache:
   - C:\maven\
