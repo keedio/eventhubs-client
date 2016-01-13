@@ -30,8 +30,8 @@ import com.microsoft.eventhubs.client.ResilientEventHubReceiver;
  */
 public class ResilientEventHubReceiveClient {
   public static void main(String[] args) {
-    if (args == null || args.length < 5) {
-      System.out.println("Usage: ReceiveClient <policyName> <policyKey> <namespace> <name> <partitionId> [timeFilterDiff]");
+    if (args == null || args.length < 6) {
+      System.out.println("Usage: ReceiveClient <policyName> <policyKey> <namespace> <name> <partitionId> <consumerGroup> [timeFilterDiff]");
       return;
     }
     
@@ -40,12 +40,12 @@ public class ResilientEventHubReceiveClient {
     String namespace = args[2];
     String name = args[3];
     String partitionId = args[4];
+    String consumerGroup = args[5];
     long enqueueTime = 0;
-    if(args.length >= 6) {
-      long enqueueTimeDiff = Integer.parseInt(args[5]);
+    if(args.length >= 7) {
+      long enqueueTimeDiff = Integer.parseInt(args[6]);
       enqueueTime = System.currentTimeMillis() - enqueueTimeDiff*1000;
     }
-    
 
     String connectionString = new ConnectionStringBuilder(policyName, policyKey, namespace).getConnectionString();
     IEventHubFilter filter = null;
@@ -54,7 +54,7 @@ public class ResilientEventHubReceiveClient {
     }
     
     ResilientEventHubReceiver receiver = new ResilientEventHubReceiver(
-        connectionString, name, partitionId, null, -1, filter);
+        connectionString, name, partitionId, consumerGroup, -1, filter);
 
     try {
       receiver.initialize();

@@ -13,8 +13,8 @@ import com.microsoft.eventhubs.client.EventHubReceiver;
  */
 public class EventHubReceiveClient {
   public static void main(String[] args) {
-    if (args == null || args.length < 5) {
-      System.out.println("Usage: ReceiveClient <policyName> <policyKey> <namespace> <name> <partitionId> [timeFilterDiff]");
+    if (args == null || args.length < 6) {
+      System.out.println("Usage: ReceiveClient <policyName> <policyKey> <namespace> <name> <partitionId> <consumerGroup> [timeFilterDiff]");
       return;
     }
     
@@ -23,9 +23,11 @@ public class EventHubReceiveClient {
     String namespace = args[2];
     String name = args[3];
     String partitionId = args[4];
+    String consumerGroup = args[5];
+
     long enqueueTime = 0;
-    if(args.length >= 6) {
-      long enqueueTimeDiff = Integer.parseInt(args[5]);
+    if(args.length >= 7) {
+      long enqueueTimeDiff = Integer.parseInt(args[6]);
       enqueueTime = System.currentTimeMillis() - enqueueTimeDiff*1000;
     }
     
@@ -34,11 +36,11 @@ public class EventHubReceiveClient {
       EventHubClient client = EventHubClient.create(policyName, policyKey, namespace, name);
       EventHubReceiver receiver = null;
       if(enqueueTime == 0) {
-        receiver = client.getConsumerGroup(null).createReceiver(partitionId,
+        receiver = client.getConsumerGroup(consumerGroup).createReceiver(partitionId,
             null, Constants.DefaultAmqpCredits);
       }
       else {
-        receiver = client.getConsumerGroup(null).createReceiver(partitionId,
+        receiver = client.getConsumerGroup(consumerGroup).createReceiver(partitionId,
             new EventHubEnqueueTimeFilter(enqueueTime), Constants.DefaultAmqpCredits);
       }
       while(true) {
