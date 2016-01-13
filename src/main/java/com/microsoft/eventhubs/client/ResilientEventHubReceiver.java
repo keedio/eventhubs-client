@@ -54,6 +54,14 @@ public class ResilientEventHubReceiver {
     this.consumerGroupName = consumerGroupName;
     this.defaultCredits = defaultCredits;
     this.filter = filter;
+
+    final ResilientEventHubReceiver instance = this;
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      public void run() {
+        instance.close();
+      }
+    });
   }
   
   public void initialize() throws EventHubException {
