@@ -17,7 +17,9 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client;
 
+import java.util.Collection;
 import java.util.concurrent.TimeoutException;
+
 import org.apache.qpid.amqp_1_0.client.LinkDetachedException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Sender;
@@ -74,6 +76,17 @@ public class EventHubSender {
   public void send(String data) throws EventHubException {
     //For interop with other language, convert string to bytes
     send(data.getBytes());
+  }
+  
+  public void send(Collection<Section> sectionCollection) throws EventHubException {
+	try {
+	  ensureSenderCreated();
+	    
+	  Message message = new Message(sectionCollection);
+	  sender.send(message);
+	} catch (Exception e) {
+	  HandleException(e);
+    }
   }
 
   public void HandleException(Exception e) throws EventHubException {
