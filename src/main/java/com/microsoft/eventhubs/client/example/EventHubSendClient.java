@@ -17,6 +17,13 @@
  *******************************************************************************/
 package com.microsoft.eventhubs.client.example;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.apache.qpid.amqp_1_0.type.Binary;
+import org.apache.qpid.amqp_1_0.type.Section;
+import org.apache.qpid.amqp_1_0.type.messaging.Data;
+
 import com.microsoft.eventhubs.client.EventHubClient;
 import com.microsoft.eventhubs.client.EventHubException;
 import com.microsoft.eventhubs.client.EventHubSender;
@@ -28,8 +35,8 @@ public class EventHubSendClient {
   
   public static void main(String[] args) {
     
-    if (args == null || args.length < 7) {
-      System.out.println("Usage: SendClient <policyName> <policyKey> <namespace> <name> <partitionId> <messageSize> <messageCount>");
+    if (args == null || args.length < 8) {
+      System.out.println("Usage: SendClient <policyName> <policyKey> <namespace> <name> <partitionId> <messageSize> <messageCount> <batchSize>");
       return;
     }
     
@@ -40,6 +47,7 @@ public class EventHubSendClient {
     String partitionId = args[4];
     int messageSize = Integer.parseInt(args[5]);
     int messageCount = Integer.parseInt(args[6]);
+    int batchSize = Integer.parseInt(args[7]);
     assert(messageSize > 0);
     assert(messageCount > 0);
     
@@ -53,17 +61,38 @@ public class EventHubSendClient {
       EventHubSender sender = client.createPartitionSender(partitionId);
       
       StringBuilder sb = new StringBuilder(messageSize);
+      Collection<Section> sectionCollection = new ArrayList<Section>(batchSize);;
+      int j=0;
       for(int i=1; i<messageCount+1; ++i) {
         while(sb.length() < messageSize) {
           sb.append(" current message: " + i);
         }
         sb.setLength(messageSize);
-        sender.send(sb.toString());
+        if (batchSize == 1)
+        	sender.send(sb.toString());
+        else
+        {
+        	if (j<batchSize){
+        		j++;
+		        sectionCollection.add(new Data(new Binary(sb.toString().getBytes())));
+        	}else{
+        		j=0;
+        		sender.send(sectionCollection);
+        		sectionCollection.clear();
+		        sectionCollection.add(new Data(new Binary(sb.toString().getBytes())));
+        	}
+        		
+        }
         sb.setLength(0);
+        
         if(i % 1000 == 0) {
           System.out.println("Number of messages sent: " + i);
         }
       }
+      
+      if (j<=batchSize)
+    	  sender.send(sectionCollection);
+      
       System.out.println("Total Number of messages sent: " + messageCount);
     } catch (EventHubException e) {
       System.out.println("Exception: " + e.getMessage());

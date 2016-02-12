@@ -53,7 +53,12 @@ public class EventHubMessage {
       String offset = null;
       long sequence = 0;
       long enqueuedTimestamp = 0;
-      byte[] data = null;
+      
+      byte[] sectionData = null;
+      byte[] auxData;
+      byte[] finalData = new byte[0];
+      byte[] separator = " | ".getBytes();
+      
       for (Section section : message.getPayload()) {
         if (section instanceof MessageAnnotations) {
           Map annotationMap = ((MessageAnnotations)section).getValue();
@@ -73,14 +78,28 @@ public class EventHubMessage {
                 Symbol.valueOf(Constants.EnqueuedTimeKey))).getTime();
           }
         }
-        else if (data == null && section instanceof Data) {
-          data = ((Data)section).getValue().getArray();
-        }
-        else if (data == null && section instanceof AmqpValue) {
-          data = (((AmqpValue)section).getValue().toString()).getBytes();
+        else{
+          if (section instanceof Data) {
+            sectionData = ((Data)section).getValue().getArray();
+          }
+          else if (section instanceof AmqpValue) {
+            sectionData = (((AmqpValue)section).getValue().toString()).getBytes();
+          }
+          if (sectionData != null){
+        	  if (finalData.length > 0){
+        		  auxData = finalData.clone();
+                  finalData = new byte[separator.length + auxData.length];
+                  System.arraycopy(auxData, 0, finalData, 0, auxData.length);
+                  System.arraycopy(separator, 0, finalData, auxData.length, separator.length);
+        	  }
+            auxData = finalData.clone();
+            finalData = new byte[sectionData.length + auxData.length];
+            System.arraycopy(auxData, 0, finalData, 0, auxData.length);
+            System.arraycopy(sectionData, 0, finalData, auxData.length, sectionData.length);
+          }
         }
       }
-      ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, data);
+      ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, finalData);
     }
     return ehMessage;
   }

@@ -20,6 +20,9 @@ package com.microsoft.eventhubs.client;
 import java.util.Collection;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.qpid.amqp_1_0.client.Connection;
+import org.apache.qpid.amqp_1_0.client.ConnectionClosedException;
+import org.apache.qpid.amqp_1_0.client.ConnectionException;
 import org.apache.qpid.amqp_1_0.client.LinkDetachedException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Sender;
@@ -34,7 +37,7 @@ public class EventHubSender {
 
   private static final Logger logger = LoggerFactory.getLogger(EventHubSender.class);
 
-  private final Session session;
+  private Session session;
   private final String entityPath;
   private final String partitionId;
   private final String destinationAddress;
@@ -101,6 +104,13 @@ public class EventHubSender {
       throw new EventHubException("Sender has been closed.", e);
     } else if (e instanceof TimeoutException) {
       throw new EventHubException("Timed out while waiting to get credit to send.", e);
+    } else if (e instanceof ConnectionClosedException) {
+        // If session is closed, caused for example if client doesn't send events for a long time, the connection must be re-established
+    	try{
+    		reopenSession();
+    	}catch (ConnectionException ce){
+    		HandleException(ce);
+    	}
     } else {
       throw new EventHubException("An unexpected error occurred while sending data.", e);
     }
@@ -126,5 +136,9 @@ public class EventHubSender {
       logger.info("Creating EventHubs sender");
       sender = session.createSender(destinationAddress);
     }
+  }
+  
+  private synchronized void reopenSession() throws ConnectionException {
+	  session = session.getConnection().createSession();	  
   }
 }
