@@ -57,7 +57,6 @@ public class EventHubMessage {
       byte[] sectionData = null;
       byte[] auxData;
       byte[] data = new byte[0];
-      byte[] separator = " | ".getBytes();
       
       for (Section section : message.getPayload()) {
         if (section instanceof MessageAnnotations) {
@@ -88,9 +87,8 @@ public class EventHubMessage {
           if (sectionData != null){
         	  if (data.length > 0){
         		  auxData = data.clone();
-                  data = new byte[separator.length + auxData.length];
+                  data = new byte[auxData.length];
                   System.arraycopy(auxData, 0, data, 0, auxData.length);
-                  System.arraycopy(separator, 0, data, auxData.length, separator.length);
         	  }
             auxData = data.clone();
             data = new byte[sectionData.length + auxData.length];
