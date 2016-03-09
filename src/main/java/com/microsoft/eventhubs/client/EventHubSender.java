@@ -37,7 +37,7 @@ public class EventHubSender {
 
   private static final Logger logger = LoggerFactory.getLogger(EventHubSender.class);
 
-  private Session session;
+  private final Session session;
   private final String entityPath;
   private final String partitionId;
   private final String destinationAddress;
@@ -82,6 +82,11 @@ public class EventHubSender {
   }
   
   public void send(Collection<Section> sectionCollection) throws EventHubException {
+    if (sectionCollection == null || sectionCollection.size() == 0){
+      logger.warn("No data to send.");
+      return;
+    }
+
 	try {
 	  ensureSenderCreated();
 	    
@@ -105,12 +110,7 @@ public class EventHubSender {
     } else if (e instanceof TimeoutException) {
       throw new EventHubException("Timed out while waiting to get credit to send.", e);
     } else if (e instanceof ConnectionClosedException) {
-        // If session is closed, caused for example if client doesn't send events for a long time, the connection must be re-established
-    	try{
-    		reopenSession();
-    	}catch (ConnectionException ce){
-    		HandleException(ce);
-    	}
+      throw new EventHubException("Connection has been closed.", e);
     } else {
       throw new EventHubException("An unexpected error occurred while sending data.", e);
     }
@@ -136,9 +136,5 @@ public class EventHubSender {
       logger.info("Creating EventHubs sender");
       sender = session.createSender(destinationAddress);
     }
-  }
-  
-  private synchronized void reopenSession() throws ConnectionException {
-	  session = session.getConnection().createSession();	  
   }
 }

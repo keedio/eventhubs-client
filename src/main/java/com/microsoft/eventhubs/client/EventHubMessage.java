@@ -56,7 +56,7 @@ public class EventHubMessage {
       
       byte[] sectionData = null;
       byte[] auxData;
-      byte[] finalData = new byte[0];
+      byte[] data = new byte[0];
       byte[] separator = " | ".getBytes();
       
       for (Section section : message.getPayload()) {
@@ -86,20 +86,20 @@ public class EventHubMessage {
             sectionData = (((AmqpValue)section).getValue().toString()).getBytes();
           }
           if (sectionData != null){
-        	  if (finalData.length > 0){
-        		  auxData = finalData.clone();
-                  finalData = new byte[separator.length + auxData.length];
-                  System.arraycopy(auxData, 0, finalData, 0, auxData.length);
-                  System.arraycopy(separator, 0, finalData, auxData.length, separator.length);
+        	  if (data.length > 0){
+        		  auxData = data.clone();
+                  data = new byte[separator.length + auxData.length];
+                  System.arraycopy(auxData, 0, data, 0, auxData.length);
+                  System.arraycopy(separator, 0, data, auxData.length, separator.length);
         	  }
-            auxData = finalData.clone();
-            finalData = new byte[sectionData.length + auxData.length];
-            System.arraycopy(auxData, 0, finalData, 0, auxData.length);
-            System.arraycopy(sectionData, 0, finalData, auxData.length, sectionData.length);
+            auxData = data.clone();
+            data = new byte[sectionData.length + auxData.length];
+            System.arraycopy(auxData, 0, data, 0, auxData.length);
+            System.arraycopy(sectionData, 0, data, auxData.length, sectionData.length);
           }
         }
       }
-      ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, finalData);
+      ehMessage = new EventHubMessage(offset, sequence, enqueuedTimestamp, data);
     }
     return ehMessage;
   }

@@ -61,27 +61,24 @@ public class EventHubSendClient {
       EventHubSender sender = client.createPartitionSender(partitionId);
       
       StringBuilder sb = new StringBuilder(messageSize);
-      Collection<Section> sectionCollection = new ArrayList<Section>(batchSize);;
-      int j=0;
+      Collection<Section> sectionCollection = new ArrayList<Section>(batchSize);
+
       for(int i=1; i<messageCount+1; ++i) {
         while(sb.length() < messageSize) {
           sb.append(" current message: " + i);
         }
         sb.setLength(messageSize);
+
         if (batchSize == 1)
         	sender.send(sb.toString());
-        else
-        {
-        	if (j<batchSize){
-        		j++;
-		        sectionCollection.add(new Data(new Binary(sb.toString().getBytes())));
-        	}else{
-        		j=0;
-        		sender.send(sectionCollection);
-        		sectionCollection.clear();
-		        sectionCollection.add(new Data(new Binary(sb.toString().getBytes())));
-        	}
-        		
+        else {
+
+          if (sectionCollection.size() >= batchSize) {
+            sender.send(sectionCollection);
+            sectionCollection.clear();
+          }
+
+          sectionCollection.add(new Data(new Binary(sb.toString().getBytes())));
         }
         sb.setLength(0);
         
@@ -90,9 +87,10 @@ public class EventHubSendClient {
         }
       }
       
-      if (j<=batchSize)
-    	  sender.send(sectionCollection);
-      
+      if (batchSize > 1 && sectionCollection.size() <= batchSize){
+        sender.send(sectionCollection);
+      }
+
       System.out.println("Total Number of messages sent: " + messageCount);
     } catch (EventHubException e) {
       System.out.println("Exception: " + e.getMessage());
