@@ -94,7 +94,9 @@ public class EventHubSender {
   }
   public void close() throws EventHubException {
     try {
-      sender.close();
+      if (sender != null && !sender.isClosed()) {
+        sender.close();
+      }
     } catch (Sender.SenderClosingException e) {
       throw new EventHubException("An error occurred while closing the sender.", e);
     }
