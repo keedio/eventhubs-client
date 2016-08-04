@@ -18,6 +18,7 @@
 package com.microsoft.eventhubs.client;
 
 import java.util.concurrent.TimeoutException;
+import org.apache.qpid.amqp_1_0.client.ConnectionException;
 import org.apache.qpid.amqp_1_0.client.LinkDetachedException;
 import org.apache.qpid.amqp_1_0.client.Message;
 import org.apache.qpid.amqp_1_0.client.Sender;
@@ -32,20 +33,32 @@ public class EventHubSender {
 
   private static final Logger logger = LoggerFactory.getLogger(EventHubSender.class);
 
-  private final Session session;
+  private final String connectionString;
   private final String entityPath;
   private final String partitionId;
   private final String destinationAddress;
 
+  private Session session;
   private Sender sender;
+  private boolean shouldRecreateSession;
 
+  @Deprecated
   public EventHubSender(Session session, String entityPath, String partitionId) {
+    this.connectionString = null;
     this.session = session;
     this.entityPath = entityPath;
     this.partitionId = partitionId;
     this.destinationAddress = getDestinationAddress();
   }
-  
+
+  public EventHubSender(String connectionString, String entityPath, String partitionId) {
+    this.connectionString = connectionString;
+    this.entityPath = entityPath;
+    this.partitionId = partitionId;
+    this.destinationAddress = getDestinationAddress();
+    this.shouldRecreateSession = true;
+  }
+
   public void send(Section section) throws EventHubException {
     try {
       ensureSenderCreated();
@@ -86,12 +99,19 @@ public class EventHubSender {
       //For now this is good enough for long running client sending objects continuously
       sender = null;
       throw new EventHubException("Sender has been closed.", e);
+    } else if (e instanceof ConnectionException)
+    {
+      // We need to recreate a connection and session to recover from the failure.
+      shouldRecreateSession = true;
+      sender = null;
+      throw new EventHubException("Connection error occurred.", e);
     } else if (e instanceof TimeoutException) {
       throw new EventHubException("Timed out while waiting to get credit to send.", e);
     } else {
       throw new EventHubException("An unexpected error occurred while sending data.", e);
     }
   }
+
   public void close() throws EventHubException {
     try {
       sender.close();
@@ -111,6 +131,13 @@ public class EventHubSender {
   private synchronized void ensureSenderCreated() throws Exception {
     if (sender == null || sender.isClosed()) {
       logger.info("Creating EventHubs sender");
+
+      if(connectionString != null && shouldRecreateSession)
+      {
+        session = EventHubClient.createConnection(connectionString).createSession();
+        shouldRecreateSession = false;
+      }
+
       sender = session.createSender(destinationAddress);
     }
   }
