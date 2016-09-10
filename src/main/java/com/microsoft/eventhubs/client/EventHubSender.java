@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 public class EventHubSender {
 
   private static final Logger logger = LoggerFactory.getLogger(EventHubSender.class);
+  private static final int retryCount = 3;
+  private static final int retryDelayInMilliseconds = 1000;
 
   private final String connectionString;
   private final String entityPath;
@@ -60,36 +62,41 @@ public class EventHubSender {
   }
 
   public void send(Section section) throws EventHubException {
-    try {
-      ensureSenderCreated();
-
       Message message = new Message(section);
-      sender.send(message);
-
-    } catch (Exception e) {
-        HandleException(e);
-    }
+      sendCore(message);
   }
   
   public void send(byte[] data) throws EventHubException {
-    try {
-      ensureSenderCreated();
-
       Binary bin = new Binary(data);
       Message message = new Message(new Data(bin));
-      sender.send(message);
-
-    } catch (Exception e) {
-      HandleException(e);
-    }
+      sendCore(message);
   }
 
   public void send(String data) throws EventHubException {
     //For interop with other language, convert string to bytes
     send(data.getBytes());
   }
+	
+  private void sendCore(Message message) throws EventHubException {
+    int retry = 0;
+    boolean sendSucceeded = false;
 
-  public void HandleException(Exception e) throws EventHubException {
+    while(!sendSucceeded) {
+      try {
+        ensureSenderCreated();
+        sender.send(message);
+        sendSucceeded = true;
+      } catch(Exception e) {
+        HandleException(e);
+        
+        if(++retry > retryCount) {
+          throw new EventHubException("An error occurred while sending data.", e);
+        }
+      }
+    }
+  }
+
+  private void HandleException(Exception e) throws EventHubException {
     logger.error(e.getMessage());
     if(e instanceof LinkDetachedException) {
       //We want to re-establish the connection if the sender was closed
@@ -98,17 +105,11 @@ public class EventHubSender {
       //TODO: We may have to do the same for more exception types which may require re-open
       //For now this is good enough for long running client sending objects continuously
       sender = null;
-      throw new EventHubException("Sender has been closed.", e);
     } else if (e instanceof ConnectionException)
     {
       // We need to recreate a connection and session to recover from the failure.
       shouldRecreateSession = true;
       sender = null;
-      throw new EventHubException("Connection error occurred.", e);
-    } else if (e instanceof TimeoutException) {
-      throw new EventHubException("Timed out while waiting to get credit to send.", e);
-    } else {
-      throw new EventHubException("An unexpected error occurred while sending data.", e);
     }
   }
 
