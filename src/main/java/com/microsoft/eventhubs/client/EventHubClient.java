@@ -33,7 +33,7 @@ public class EventHubClient {
   private EventHubClient(String connectionString, String entityPath) throws EventHubException {
     this.connectionString = connectionString;
     this.entityPath = entityPath;
-    connection = createConnection();
+    connection = createConnection(connectionString);
   }
   
   String getConnectionString() {
@@ -69,12 +69,7 @@ public class EventHubClient {
   }
 
   public EventHubSender createPartitionSender(String partitionId) throws EventHubException {
-    try {
-      return new EventHubSender(connection.createSession(), entityPath, partitionId);
-    } catch (ConnectionException e) {
-      logger.error("An error occured while creating the partition sender session.", e);
-      throw new EventHubException(e);
-    }
+      return new EventHubSender(connectionString, entityPath, partitionId);
   }
 
   public EventHubConsumerGroup getConsumerGroup(String cgName) {
@@ -92,8 +87,8 @@ public class EventHubClient {
     }
   }
 
-  private Connection createConnection() throws EventHubException {
-    ConnectionStringParser ConnectionStringParser = new ConnectionStringParser(this.connectionString);
+  public static Connection createConnection(String connectionString) throws EventHubException {
+    ConnectionStringParser ConnectionStringParser = new ConnectionStringParser(connectionString);
     Connection clientConnection;
 
     try {
