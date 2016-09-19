@@ -49,6 +49,12 @@
       <organization>Microsoft</organization>
       <organizationUrl>http://www.microsoft.com</organizationUrl>
     </developer>
+	<developer>
+      <name>Ravi Peri</name>
+      <email>raviperi@microsoft.com</email>
+      <organization>Microsoft</organization>
+      <organizationUrl>http://www.microsoft.com</organizationUrl>
+    </developer>
   </developers>
   <scm>
     <connection>scm:git:git@github.com:hdinsight/eventhubs-client.git</connection>
