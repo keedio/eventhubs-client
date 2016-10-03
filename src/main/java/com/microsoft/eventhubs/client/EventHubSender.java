@@ -19,7 +19,6 @@ package com.microsoft.eventhubs.client;
 
 import java.util.Collection;
 import java.util.concurrent.TimeoutException;
-
 import org.apache.qpid.amqp_1_0.client.Connection;
 import org.apache.qpid.amqp_1_0.client.ConnectionClosedException;
 import org.apache.qpid.amqp_1_0.client.ConnectionException;
@@ -36,68 +35,79 @@ import org.slf4j.LoggerFactory;
 public class EventHubSender {
 
   private static final Logger logger = LoggerFactory.getLogger(EventHubSender.class);
+  private static final int retryCount = 3;
+  private static final int retryDelayInMilliseconds = 1000;
 
-  private final Session session;
+  private final String connectionString;
   private final String entityPath;
   private final String partitionId;
   private final String destinationAddress;
 
+  private Session session;
   private Sender sender;
+  private boolean shouldRecreateSession;
 
+  @Deprecated
   public EventHubSender(Session session, String entityPath, String partitionId) {
+    this.connectionString = null;
     this.session = session;
     this.entityPath = entityPath;
     this.partitionId = partitionId;
     this.destinationAddress = getDestinationAddress();
   }
-  
+
+  public EventHubSender(String connectionString, String entityPath, String partitionId) {
+    this.connectionString = connectionString;
+    this.entityPath = entityPath;
+    this.partitionId = partitionId;
+    this.destinationAddress = getDestinationAddress();
+    this.shouldRecreateSession = true;
+  }
+
   public void send(Section section) throws EventHubException {
-    try {
-      ensureSenderCreated();
-
       Message message = new Message(section);
-      sender.send(message);
-
-    } catch (Exception e) {
-        HandleException(e);
-    }
+      sendCore(message);
   }
   
   public void send(byte[] data) throws EventHubException {
-    try {
-      ensureSenderCreated();
-
       Binary bin = new Binary(data);
       Message message = new Message(new Data(bin));
-      sender.send(message);
-
-    } catch (Exception e) {
-      HandleException(e);
-    }
+      sendCore(message);
   }
 
   public void send(String data) throws EventHubException {
     //For interop with other language, convert string to bytes
     send(data.getBytes());
   }
-  
   public void send(Collection<Section> sectionCollection) throws EventHubException {
-    if (sectionCollection == null || sectionCollection.size() == 0){
+    if (sectionCollection == null || sectionCollection.size() == 0) {
       logger.warn("No data to send.");
       return;
     }
+    Message message = new Message(sectionCollection);
+    sendCore(message);
+  }
+	
+  private void sendCore(Message message) throws EventHubException {
+    int retry = 0;
+    boolean sendSucceeded = false;
 
-	try {
-	  ensureSenderCreated();
-	    
-	  Message message = new Message(sectionCollection);
-	  sender.send(message);
-	} catch (Exception e) {
-	  HandleException(e);
+    while(!sendSucceeded) {
+      try {
+        ensureSenderCreated();
+        sender.send(message);
+        sendSucceeded = true;
+      } catch(Exception e) {
+        HandleException(e);
+        
+        if(++retry > retryCount) {
+          throw new EventHubException("An error occurred while sending data.", e);
+        }
+      }
     }
   }
 
-  public void HandleException(Exception e) throws EventHubException {
+  private void HandleException(Exception e) throws EventHubException {
     logger.error(e.getMessage());
     if(e instanceof LinkDetachedException) {
       //We want to re-establish the connection if the sender was closed
@@ -106,18 +116,19 @@ public class EventHubSender {
       //TODO: We may have to do the same for more exception types which may require re-open
       //For now this is good enough for long running client sending objects continuously
       sender = null;
-      throw new EventHubException("Sender has been closed.", e);
-    } else if (e instanceof TimeoutException) {
-      throw new EventHubException("Timed out while waiting to get credit to send.", e);
-    } else if (e instanceof ConnectionClosedException) {
-      throw new EventHubException("Connection has been closed.", e);
-    } else {
-      throw new EventHubException("An unexpected error occurred while sending data.", e);
+    } else if (e instanceof ConnectionException)
+    {
+      // We need to recreate a connection and session to recover from the failure.
+      shouldRecreateSession = true;
+      sender = null;
     }
   }
+
   public void close() throws EventHubException {
     try {
-      sender.close();
+      if (sender != null && !sender.isClosed()) {
+        sender.close();
+      }
     } catch (Sender.SenderClosingException e) {
       throw new EventHubException("An error occurred while closing the sender.", e);
     }
@@ -134,6 +145,13 @@ public class EventHubSender {
   private synchronized void ensureSenderCreated() throws Exception {
     if (sender == null || sender.isClosed()) {
       logger.info("Creating EventHubs sender");
+
+      if(connectionString != null && shouldRecreateSession)
+      {
+        session = EventHubClient.createConnection(connectionString).createSession();
+        shouldRecreateSession = false;
+      }
+
       sender = session.createSender(destinationAddress);
     }
   }

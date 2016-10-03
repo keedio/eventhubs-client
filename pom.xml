@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.eventhubs.client</groupId>
   <artifactId>eventhubs-client</artifactId>
-  <version>1.0</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
   <name>EventHubs Client</name>
   <description>A generic EventHubs client library for JVM</description>
@@ -46,6 +46,12 @@
     <developer>
       <name>Ravi Tandon</name>
       <email>rtandon@microsoft.com</email>
+      <organization>Microsoft</organization>
+      <organizationUrl>http://www.microsoft.com</organizationUrl>
+    </developer>
+	<developer>
+      <name>Ravi Peri</name>
+      <email>raviperi@microsoft.com</email>
       <organization>Microsoft</organization>
       <organizationUrl>http://www.microsoft.com</organizationUrl>
     </developer>
@@ -101,7 +107,7 @@
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <!--<version>1.6.3</version> use latest version-->
+        <version>1.6.7</version>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
